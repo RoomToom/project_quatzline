@@ -11,17 +11,28 @@ from app.utils.security import decode_token
 
 router = APIRouter()
 
+
 # ----- Схемы запросов -----
 
+# Модель для запроса регистрации
 class RegisterRequest(BaseModel):
     login: str
     password: str
     riot_id_name: str
     riot_id_tag: str
 
+
+# Модель для запроса логина
 class LoginRequest(BaseModel):
     login: str
     password: str
+
+
+# Модель ответа с JWT токеном
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str
+
 
 # ----- Эндпоинт: Регистрация -----
 @router.post("/register")
@@ -42,9 +53,9 @@ async def register_user(data: RegisterRequest):
 
     return {"message": "Регистрация успешна"}
 
-# ----- Эндпоинт: Логин -----
 
-@router.post("/login")
+# ----- Эндпоинт: Логин -----
+@router.post("/login", response_model=TokenResponse)
 async def login_user(data: LoginRequest):
     if not db.pool:
         raise HTTPException(status_code=500, detail="POOL IS NONE!")
@@ -58,8 +69,7 @@ async def login_user(data: LoginRequest):
     return {"access_token": token, "token_type": "bearer"}
 
 
-
-# ----- Эндпоинт: get token -----
+# ----- Эндпоинт: get token ----- (получение данных текущего пользователя по токену)
 @router.get("/me")
 async def get_my_profile(user_id: int = Depends(get_current_user_id)):
     user = await db.pool.fetchrow("SELECT id, login, riot_id_name, riot_id_tag FROM users WHERE id = $1", user_id)
@@ -70,6 +80,7 @@ async def get_my_profile(user_id: int = Depends(get_current_user_id)):
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     payload = decode_token(token)
@@ -86,12 +97,3 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=404, detail="Пользователя не найдено")
 
     return user
-
-@router.get("/me")
-async def get_my_profile(current_user: dict = Depends(get_current_user)):
-    return {
-        "id": current_user["id"],
-        "login": current_user["login"],
-        "riot_id_name": current_user["riot_id_name"],
-        "riot_id_tag": current_user["riot_id_tag"]
-    }
