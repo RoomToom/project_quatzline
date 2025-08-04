@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+asyncpg
+bcrypt==4.1.2
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv
