@@ -10,12 +10,12 @@ from fastapi import HTTPException
 from app.utils.config import SECRET_KEY, ALGORITHM
 
 
-# Завантаження змінних з .env
+# Загрузка переменных с .env
 load_dotenv()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
 
-# Безпечний ключ із .env
+# Безопасный ключ с .env
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise RuntimeError("SECRET_KEY is not set in the environment!")
@@ -43,14 +43,14 @@ def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
         if user_id is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Недійсний токен")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Недействительный токен")
         return int(user_id)
     except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Недійсний токен")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Недействительный токен")
 
 def decode_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
     except JWTError:
-        raise HTTPException(status_code=401, detail="Недійсний токен")
+        raise HTTPException(status_code=401, detail="Недействительный токен")

@@ -11,7 +11,7 @@ from app.utils.security import decode_token
 
 router = APIRouter()
 
-# ----- Схеми запитів -----
+# ----- Схемы запросов -----
 
 class RegisterRequest(BaseModel):
     login: str
@@ -23,12 +23,12 @@ class LoginRequest(BaseModel):
     login: str
     password: str
 
-# ----- Ендпоінт: Реєстрація -----
+# ----- Эндпоинт: Регистрация -----
 @router.post("/register")
 async def register_user(data: RegisterRequest):
     existing_user = await db.pool.fetchrow("SELECT id FROM users WHERE login = $1", data.login)
     if existing_user:
-        raise HTTPException(status_code=400, detail="Користувач з таким логіном вже існує")
+        raise HTTPException(status_code=400, detail="Пользователь с таким логином уже существует")
 
     hashed_password = hash_password(data.password)
 
@@ -40,9 +40,9 @@ async def register_user(data: RegisterRequest):
         data.login, hashed_password, data.riot_id_name, data.riot_id_tag
     )
 
-    return {"message": "Реєстрація успішна"}
+    return {"message": "Регистрация успешна"}
 
-# ----- Ендпоінт: Логін -----
+# ----- Эндпоинт: Логин -----
 
 @router.post("/login")
 async def login_user(data: LoginRequest):
@@ -52,19 +52,19 @@ async def login_user(data: LoginRequest):
     user = await db.pool.fetchrow("SELECT id, password_hash FROM users WHERE login = $1", data.login)
 
     if not user or not verify_password(data.password, user["password_hash"]):
-        raise HTTPException(status_code=401, detail="Невірний логін або пароль")
+        raise HTTPException(status_code=401, detail="Неверный логин или пароль")
 
     token = create_access_token({"sub": str(user["id"])})
     return {"access_token": token, "token_type": "bearer"}
 
 
 
-# ----- Ендпоінт: get token -----
+# ----- Эндпоинт: get token -----
 @router.get("/me")
 async def get_my_profile(user_id: int = Depends(get_current_user_id)):
     user = await db.pool.fetchrow("SELECT id, login, riot_id_name, riot_id_tag FROM users WHERE id = $1", user_id)
     if not user:
-        raise HTTPException(status_code=404, detail="Користувача не знайдено")
+        raise HTTPException(status_code=404, detail="Пользователя не найдено")
 
     return dict(user)
 
@@ -76,14 +76,14 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     user_id = payload.get("sub")
 
     if not user_id:
-        raise HTTPException(status_code=401, detail="Недійсний токен")
+        raise HTTPException(status_code=401, detail="Недействительный токен")
 
     user = await db.pool.fetchrow(
         "SELECT id, login, riot_id_name, riot_id_tag FROM users WHERE id = $1",
         int(user_id)
     )
     if not user:
-        raise HTTPException(status_code=404, detail="Користувача не знайдено")
+        raise HTTPException(status_code=404, detail="Пользователя не найдено")
 
     return user
 

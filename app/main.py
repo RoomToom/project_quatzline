@@ -5,7 +5,7 @@ from app.users.routers import router as users_router
 app = FastAPI()
 
 
-# Підключення до бази при запуску
+# Подключение к базе при запуске
 @app.on_event("startup")
 async def startup():
     await setup_db()
